@@ -1,0 +1,586 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Dashboard Styles */
+    .dashboard-container {
+        padding: 1rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+        background: var(--card-bg, rgba(255,255,255,0.07));
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-card h3 {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-muted, #aaa);
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--primary-color, #00e6d0);
+    }
+
+    .chart-container {
+        background: var(--card-bg, rgba(255,255,255,0.07));
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        height: 400px; /* Fixed height to prevent infinite expansion */
+    }
+
+    .chart-container h3 {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .recent-signals {
+        background: var(--card-bg, rgba(255,255,255,0.07));
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .recent-signals h3 {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .signals-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .signals-table th,
+    .signals-table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .signals-table th {
+        font-weight: 500;
+        color: var(--text-muted, #aaa);
+    }
+
+    .signal-direction {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+    }
+
+    .signal-direction.call {
+        background-color: rgba(46, 204, 113, 0.2);
+        color: #2ecc71;
+    }
+
+    .signal-direction.put {
+        background-color: rgba(231, 76, 60, 0.2);
+        color: #e74c3c;
+    }
+
+    .error-message {
+        background: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    /* Responsive Design */
+    @media (min-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (min-width: 992px) {
+        .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .dashboard-container {
+            padding: 1.5rem;
+        }
+    }
+
+    /* Dark Mode Support */
+    @media (prefers-color-scheme: dark) {
+        .stat-card,
+        .chart-container,
+        .recent-signals {
+            background: rgba(255,255,255,0.05);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    {% if error %}
+    <div class="error-message">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Welcome Message -->
+    <div class="stat-card" style="margin-bottom: 1.5rem;">
+        <h3>Welcome, {{ user.username if user else 'User' }}!</h3>
+        <div class="stat-value">Your Trading Dashboard</div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Signals</h3>
+            <div class="stat-value">{{ signals|length if signals else 0 }}</div>
+        </div>
+        <div class="stat-card">
+            <h3>Active Trades</h3>
+            <div class="stat-value">{{ trades|length if trades else 0 }}</div>
+        </div>
+        <div class="stat-card">
+            <h3>Open Positions</h3>
+            <div class="stat-value">{{ positions|length if positions else 0 }}</div>
+        </div>
+        <div class="stat-card">
+            <h3>Portfolio Value</h3>
+            <div class="stat-value" id="portfolio-value">₹0.00</div>
+        </div>
+        <div class="stat-card">
+            <h3>Today's P&L</h3>
+            <div class="stat-value" id="todays-pnl">₹0.00</div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="chart-container">
+        <h3>Performance Overview</h3>
+        <div style="height: 300px; position: relative;">
+            <canvas id="performanceChart"></canvas>
+            <script type="application/json" id="portfolio-history-data">{{ portfolio_history|tojson|safe }}</script>
+        </div>
+    </div>
+
+    <!-- Recent Signals -->
+    <div class="recent-signals">
+        <h3>Recent Signals</h3>
+        {% if signals %}
+        <div class="table-responsive">
+            <table class="signals-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Pair</th>
+                        <th>Direction</th>
+                        <th>Confidence</th>
+                        <th>Entry Price</th>
+                        <th>Stop Loss</th>
+                        <th>Take Profit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for signal in signals %}
+                    <tr>
+                        <td>{{ signal.time|default('N/A') }}</td>
+                        <td>{{ signal.pair|default('N/A') }}</td>
+                        <td>
+                            <span class="signal-direction {{ signal.direction|lower|default('') }}">
+                                {{ signal.direction|default('N/A') }}
+                            </span>
+                        </td>
+                        <td>{{ "%.1f"|format(signal.confidence) if signal.confidence else 'N/A' }}%</td>
+                        <td>{{ "%.5f"|format(signal.entry_price) if signal.entry_price else 'N/A' }}</td>
+                        <td>{{ "%.5f"|format(signal.stop_loss) if signal.stop_loss else 'N/A' }}</td>
+                        <td>{{ "%.5f"|format(signal.take_profit) if signal.take_profit else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-muted">No recent signals available</p>
+        {% endif %}
+    </div>
+
+    <!-- Recent Trades -->
+    <div class="recent-signals" style="margin-top: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3>Recent Trades</h3>
+            <div class="date-filter-controls" style="display: flex; gap: 10px; align-items: center;">
+                <label for="start-date" style="color: #666; font-size: 0.9rem;">From:</label>
+                <input type="date" id="start-date" name="start-date" value="{{ start_date or user_registration_date }}" 
+                       style="padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+                <label for="end-date" style="color: #666; font-size: 0.9rem;">To:</label>
+                <input type="date" id="end-date" name="end-date" value="{{ end_date or '' }}" 
+                       style="padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+                <button onclick="filterTrades()" 
+                        style="background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">
+                    🔍 Filter
+                </button>
+                <button onclick="resetDateFilter()" 
+                        style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">
+                    ↺ Reset
+                </button>
+            </div>
+        </div>
+        
+        {% if trades %}
+        <div class="table-responsive">
+            <table class="signals-table">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Direction</th>
+                        <th>Entry Price</th>
+                        <th>Exit Price</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th>P&L</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trade in trades %}
+                    <tr>
+                        <td>{{ trade.symbol|default('N/A') }}</td>
+                        <td>
+                            <span class="signal-direction {{ trade.direction|lower|default('') }}">
+                                {{ trade.direction|default('N/A') }}
+                            </span>
+                        </td>
+                        <td>{{ "%.5f"|format(trade.entry_price) if trade.entry_price else 'N/A' }}</td>
+                        <td>{{ "%.5f"|format(trade.exit_price) if trade.exit_price else 'N/A' }}</td>
+                        <td>{{ "%.2f"|format(trade.quantity) if trade.quantity else 'N/A' }}</td>
+                        <td>{{ trade.status|default('N/A') }}</td>
+                        <td>{{ "%.2f"|format(trade.profit_loss) if trade.profit_loss else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 2rem; color: #666;">
+            <p>📊 No trades found for the selected date range</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+                {% if start_date or end_date %}
+                    Try adjusting your date range or click "Reset" to see all trades
+                {% else %}
+                    No trades available yet
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+<script>
+    // Date filtering functions with AJAX
+    function filterTrades() {
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        
+        // Show loading indicator
+        showLoadingIndicator();
+        
+        // Build URL with date parameters
+        let url = '/api/trades/filtered?';
+        if (startDate) {
+            url += 'start_date=' + encodeURIComponent(startDate);
+        }
+        if (endDate) {
+            if (startDate) url += '&';
+            url += 'end_date=' + encodeURIComponent(endDate);
+        }
+        
+        // Fetch data via AJAX
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                hideLoadingIndicator();
+                if (data.success) {
+                    updateTradesTable(data.trades, data.count, startDate, endDate);
+                } else {
+                    showErrorMessage('Error fetching trades: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                hideLoadingIndicator();
+                showErrorMessage('Network error: ' + error.message);
+            });
+    }
+    
+    function resetDateFilter() {
+        // Reset to default values (registration date to today)
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('start-date').value = '{{ user_registration_date }}';
+        document.getElementById('end-date').value = today;
+        
+        // Fetch all trades
+        filterTrades();
+    }
+    
+    function showLoadingIndicator() {
+        const tableContainer = document.querySelector('.table-responsive');
+        if (tableContainer) {
+            tableContainer.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <p style="margin-top: 1rem; color: #666;">Loading trades...</p>
+                </div>
+            `;
+        }
+    }
+    
+    function hideLoadingIndicator() {
+        // Loading indicator will be replaced by updateTradesTable
+    }
+    
+    function updateTradesTable(trades, count, startDate, endDate) {
+        const tableContainer = document.querySelector('.table-responsive');
+        if (!tableContainer) return;
+        
+        if (trades.length === 0) {
+            tableContainer.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #666;">
+                    <p>📊 No trades found for the selected date range</p>
+                    <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+                        ${startDate || endDate ? 'Try adjusting your date range or click "Reset" to see all trades' : 'No trades available yet'}
+                    </p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Build table HTML
+        let tableHTML = `
+            <table class="signals-table">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Direction</th>
+                        <th>Entry Price</th>
+                        <th>Exit Price</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th>P&L</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        trades.forEach(trade => {
+            const directionClass = trade.direction ? trade.direction.toLowerCase() : '';
+            const entryPrice = trade.entry_price ? parseFloat(trade.entry_price).toFixed(5) : 'N/A';
+            const exitPrice = trade.exit_price ? parseFloat(trade.exit_price).toFixed(5) : 'N/A';
+            const quantity = trade.quantity ? parseFloat(trade.quantity).toFixed(2) : 'N/A';
+            const profitLoss = trade.profit_loss ? parseFloat(trade.profit_loss).toFixed(2) : 'N/A';
+            
+            tableHTML += `
+                <tr>
+                    <td>${trade.symbol || 'N/A'}</td>
+                    <td>
+                        <span class="signal-direction ${directionClass}">
+                            ${trade.direction || 'N/A'}
+                        </span>
+                    </td>
+                    <td>₹${entryPrice}</td>
+                    <td>₹${exitPrice}</td>
+                    <td>${quantity}</td>
+                    <td>${trade.status || 'N/A'}</td>
+                    <td>₹${profitLoss}</td>
+                </tr>
+            `;
+        });
+        
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+        
+        tableContainer.innerHTML = tableHTML;
+        
+        // Show success message
+        showSuccessMessage(`Found ${count} trades for the selected date range`);
+    }
+    
+    function showSuccessMessage(message) {
+        // Create or update success message
+        let messageDiv = document.getElementById('filter-message');
+        if (!messageDiv) {
+            messageDiv = document.createElement('div');
+            messageDiv.id = 'filter-message';
+            messageDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 1000; padding: 10px 15px; border-radius: 4px; font-size: 0.9rem; transition: all 0.3s ease;';
+            document.body.appendChild(messageDiv);
+        }
+        
+        messageDiv.style.backgroundColor = '#d4edda';
+        messageDiv.style.color = '#155724';
+        messageDiv.style.border = '1px solid #c3e6cb';
+        messageDiv.textContent = message;
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            if (messageDiv) {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, 300);
+            }
+        }, 3000);
+    }
+    
+    function showErrorMessage(message) {
+        // Create or update error message
+        let messageDiv = document.getElementById('filter-message');
+        if (!messageDiv) {
+            messageDiv = document.createElement('div');
+            messageDiv.id = 'filter-message';
+            messageDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 1000; padding: 10px 15px; border-radius: 4px; font-size: 0.9rem; transition: all 0.3s ease;';
+            document.body.appendChild(messageDiv);
+        }
+        
+        messageDiv.style.backgroundColor = '#f8d7da';
+        messageDiv.style.color = '#721c24';
+        messageDiv.style.border = '1px solid #f5c6cb';
+        messageDiv.textContent = message;
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            if (messageDiv) {
+                messageDiv.style.opacity = '0';
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, 300);
+            }
+        }, 5000);
+    }
+    
+    // Set today's date as default end date if not set
+    document.addEventListener('DOMContentLoaded', function() {
+        const endDateInput = document.getElementById('end-date');
+        if (!endDateInput.value) {
+            const today = new Date().toISOString().split('T')[0];
+            endDateInput.value = today;
+        }
+    });
+    // Portfolio history data from backend
+    const portfolioHistoryData = {{ (portfolio_history|tojson|safe) if portfolio_history else '[]' }};
+    console.log('Portfolio history from backend:', portfolioHistoryData);
+    
+    // Initialize performance chart
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('performanceChart');
+        if (ctx) {
+            // Build from portfolio_history if provided, else fallback
+            let labels = [];
+            let data = [];
+            try {
+                // Use the global portfolio history data
+                const history = portfolioHistoryData;
+                console.log('Using portfolio history data:', history);
+                
+                if (history && Array.isArray(history) && history.length > 0) {
+                    labels = history.map(h => h.timestamp.split(' ')[0]).reverse();
+                    data = history.map(h => h.portfolio_value).reverse();
+                    console.log('Chart labels:', labels);
+                    console.log('Chart data:', data);
+                } else {
+                    console.log('No portfolio history data available, using fallback');
+                    labels = ['--'];
+                    data = [0];
+                }
+            } catch (e) {
+                console.error('Error processing portfolio history:', e);
+                console.log('Using fallback chart data');
+                labels = ['--'];
+                data = [0];
+            }
+
+            new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Portfolio Value',
+                        data: data,
+                        borderColor: '#00e6d0',
+                        backgroundColor: 'rgba(0, 230, 208, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Fetch live portfolio summary for top stats
+        fetch('/portfolio/summary')
+            .then(r => r.json())
+            .then(data => {
+                const pv = document.getElementById('portfolio-value');
+                const tp = document.getElementById('todays-pnl');
+                if (pv && typeof data.portfolio_value !== 'undefined') {
+                    pv.textContent = `₹${Number(data.portfolio_value || 0).toFixed(2)}`;
+                }
+                if (tp && typeof data.today_pnl !== 'undefined') {
+                    const val = Number(data.today_pnl || 0);
+                    tp.textContent = `₹${val.toFixed(2)}`;
+                    tp.style.color = val >= 0 ? '#4ecdc4' : '#ff6b6b';
+                }
+            })
+            .catch(() => {})
+    });
+</script>
+{% endblock %}

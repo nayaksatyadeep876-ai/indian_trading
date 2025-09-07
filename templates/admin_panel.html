@@ -1,0 +1,1921 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - KishanX Trading{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* Override base styles for admin panel */
+        .admin-panel-body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #fff;
+            min-height: 100vh;
+            margin-left: 0;
+            padding-left: 0;
+        }
+        
+        .admin-panel-body .sidebar {
+            display: none;
+        }
+        
+        .admin-panel-body .main-content {
+            margin-left: 0;
+            width: 100%;
+        }
+        
+        .admin-header {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding: 20px 0;
+        }
+        
+        .admin-card {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 25px;
+        }
+        
+        .admin-card .card-header {
+            background: linear-gradient(135deg, #00e6d0, #0099cc);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            border: none;
+            padding: 15px 20px;
+        }
+        
+        .form-control, .form-select {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: rgba(0,0,0,0.4);
+            border-color: #00e6d0;
+            color: white;
+            box-shadow: 0 0 0 0.2rem rgba(0, 230, 208, 0.25);
+        }
+        
+        .form-control::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .btn-admin {
+            background: linear-gradient(135deg, #00e6d0, #0099cc);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-admin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 230, 208, 0.4);
+            color: white;
+        }
+        
+        .btn-danger-admin {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        }
+        
+        .btn-success-admin {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-online { background: #4CAF50; box-shadow: 0 0 8px #4CAF50; }
+        .status-offline { background: #ff6b6b; box-shadow: 0 0 8px #ff6b6b; }
+        .status-warning { background: #ffc107; box-shadow: 0 0 8px #ffc107; }
+        
+        .metric-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00e6d0;
+        }
+        
+        .metric-label {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .api-status {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .api-active { background: rgba(76, 175, 80, 0.2); color: #4CAF50; border: 1px solid #4CAF50; }
+        .api-inactive { background: rgba(244, 67, 54, 0.2); color: #f44336; border: 1px solid #f44336; }
+        .api-pending { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid #ffc107; }
+        
+        .log-container {
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .log-info { color: #00e6d0; }
+        .log-warning { color: #ffc107; }
+        .log-error { color: #ff6b6b; }
+        .log-success { color: #4CAF50; }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00e6d0, #0099cc);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 230, 208, 0.4);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #ffb300);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-active {
+            background: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+        
+        .status-inactive {
+            background: #f44336;
+            box-shadow: 0 0 10px rgba(244, 67, 54, 0.5);
+        }
+        
+        .api-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .api-active {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+        
+        .api-inactive {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+        
+        .metric-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #00e6d0, #0099cc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .table-dark {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .table-dark th {
+            background: rgba(0,230,208,0.2);
+            border: none;
+            color: #00e6d0;
+            font-weight: 600;
+        }
+        
+        .table-dark td {
+            border: none;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .table-dark tbody tr:hover {
+            background: rgba(0,230,208,0.1);
+        }
+        
+        .progress {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            height: 8px;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(135deg, #00e6d0, #0099cc);
+            border-radius: 10px;
+        }
+        
+        .alert {
+            border: none;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .alert-success {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 4px solid #4CAF50;
+            color: #4CAF50;
+        }
+        
+        .alert-danger {
+            background: rgba(244, 67, 54, 0.2);
+            border-left: 4px solid #f44336;
+            color: #f44336;
+        }
+        
+        .alert-warning {
+            background: rgba(255, 193, 7, 0.2);
+            border-left: 4px solid #ffc107;
+            color: #ffc107;
+        }
+        
+        .alert-info {
+            background: rgba(0, 230, 208, 0.2);
+            border-left: 4px solid #00e6d0;
+            color: #00e6d0;
+        }
+        
+        .nav-tabs {
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+        
+        .nav-tabs .nav-link {
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.7);
+            border-radius: 10px 10px 0 0;
+            margin-right: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: #00e6d0;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: linear-gradient(135deg, #00e6d0, #0099cc);
+            color: white;
+            border: none;
+        }
+        
+        .tab-content {
+            background: rgba(255,255,255,0.05);
+            border-radius: 0 0 15px 15px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-top: none;
+        }
+        
+        .badge {
+            font-size: 0.8rem;
+            padding: 6px 12px;
+            border-radius: 15px;
+        }
+        
+        .badge-success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+        
+        .badge-danger {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+        }
+        
+        .badge-warning {
+            background: linear-gradient(135deg, #ffc107, #ffb300);
+        }
+        
+        .badge-info {
+            background: linear-gradient(135deg, #00e6d0, #0099cc);
+        }
+        
+        .spinner-border {
+            color: #00e6d0;
+        }
+        
+        .modal-content {
+            background: rgba(26, 26, 46, 0.95);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .modal-footer {
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .close {
+            color: rgba(255,255,255,0.7);
+            text-shadow: none;
+        }
+        
+        .close:hover {
+            color: #ff6b6b;
+        }
+        
+        /* Custom scrollbar */
+        .log-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .log-container::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+        
+        .log-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #00e6d0, #0099cc);
+            border-radius: 4px;
+        }
+        
+        .log-container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #0099cc, #00e6d0);
+        }
+        
+        /* Animation for status indicators */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .status-active {
+            animation: pulse 2s infinite;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .admin-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .metric-value {
+                font-size: 2rem;
+            }
+            
+            .admin-card {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<body class="admin-panel-body">
+    <div class="admin-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1><i class="fas fa-cogs"></i> Admin Panel</h1>
+                    <p class="mb-0">Manage Trading System & Inject API Data</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="/dashboard" class="btn btn-admin me-2">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                    <a href="/admin" class="btn btn-warning me-2">
+                        <i class="fas fa-users"></i> User Management
+                    </a>
+                    <span class="api-status" id="system-status">System Status</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid mt-4">
+        <!-- System Overview -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value" id="active-trades">0</div>
+                    <div class="metric-label">Active Trades</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value" id="total-pnl">₹0.00</div>
+                    <div class="metric-label">Total P&L</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value" id="win-rate">0%</div>
+                    <div class="metric-label">Win Rate</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value" id="api-status">DEMO</div>
+                    <div class="metric-label">Trading Mode</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Management Section -->
+        <div class="row mb-4">
+            <!-- Data Fetching & Management -->
+            <div class="col-lg-6">
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-download"></i> Data Fetching & Management</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Select Data Type to Fetch</label>
+                                    <select class="form-select" id="data-type-selector" onchange="updateDataForm()">
+                                        <option value="">-- Select Data Type --</option>
+                                        <option value="market_data">📊 Market Data (OHLC, Volume, etc.)</option>
+                                        <option value="trading_signals">🎯 Trading Signals (Buy/Sell/Hold)</option>
+                                        <option value="user_data">👥 User Data (Profiles, Balances, etc.)</option>
+                                        <option value="trade_history">📈 Trade History (All Trades)</option>
+                                        <option value="portfolio_data">💼 Portfolio Data (Positions, P&L)</option>
+                                        <option value="system_logs">📝 System Logs (Error, Info, Debug)</option>
+                                        <option value="performance_metrics">📊 Performance Metrics (Win Rate, etc.)</option>
+                                        <option value="security_events">🔒 Security Events (Login, Access, etc.)</option>
+                                        <option value="notification_data">🔔 Notification Data (Alerts, Messages)</option>
+                                        <option value="backup_data">💾 Backup Data (Database Backups)</option>
+                                        <option value="api_status">🔌 API Status (Angel One, External APIs)</option>
+                                        <option value="trading_parameters">⚙️ Trading Parameters (Settings, Config)</option>
+                                        <option value="cache_data">🗄️ Cache Data (Redis, Memory Cache)</option>
+                                        <option value="rate_limit_data">⏱️ Rate Limit Data (API Limits, Usage)</option>
+                                        <option value="all_data">🌟 All Data (Complete System Export)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Quick Actions</label>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-success-admin btn-sm" onclick="fetchQuickData('all_data')">
+                                            <i class="fas fa-download"></i> Export All Data
+                                        </button>
+                                        <button class="btn btn-warning btn-sm" onclick="fetchQuickData('performance_metrics')">
+                                            <i class="fas fa-chart-line"></i> Performance Report
+                                        </button>
+                                        <button class="btn btn-info btn-sm" onclick="testFetchData()">
+                                            <i class="fas fa-bug"></i> Test Fetch
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons - 2 per row -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-center gap-2">
+                                    <button class="btn btn-admin btn-sm" onclick="fetchSelectedData()" id="fetch-btn" disabled>
+                                        <i class="fas fa-download"></i> Fetch
+                                    </button>
+                                    <button class="btn btn-success-admin btn-sm" onclick="exportFetchedData()" id="export-btn" disabled>
+                                        <i class="fas fa-file-export"></i> Export
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-center gap-2">
+                                    <button class="btn btn-warning btn-sm" onclick="previewData()" id="preview-btn" disabled>
+                                        <i class="fas fa-eye"></i> Preview
+                                    </button>
+                                    <button class="btn btn-info btn-sm" onclick="debugFetchData()" title="Debug fetch data">
+                                        <i class="fas fa-bug"></i> Debug
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Filter Options - Always visible -->
+                        <div class="mb-3">
+                            <label class="form-label">Filter Options</label>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">Start Date</label>
+                                        <input type="date" class="form-control" id="start-date" placeholder="Start Date">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">End Date</label>
+                                        <input type="date" class="form-control" id="end-date" placeholder="End Date">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">Limit Results</label>
+                                        <input type="number" class="form-control" id="result-limit" 
+                                               placeholder="Number of records (0 = all)" value="100" min="0" max="10000">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">Format</label>
+                                        <select class="form-select" id="export-format">
+                                            <option value="json">JSON</option>
+                                            <option value="csv">CSV</option>
+                                            <option value="excel">Excel</option>
+                                            <option value="html">HTML Table</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label class="form-label">Additional Filters</label>
+                                        <textarea class="form-control" id="additional-filters" rows="2" 
+                                                  placeholder="Additional filters (JSON format): {&quot;status&quot;: &quot;active&quot;, &quot;user_id&quot;: 1}"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Data Preview -->
+            <div class="col-lg-6">
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-eye"></i> Data Preview</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="data-preview" class="mt-3" style="display: none;">
+                            <div class="log-container" id="data-preview-container" style="height: 400px;">
+                                <div class="log-entry log-info">Select data type and click "Fetch Data" to see sample data</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Data Injection Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-database"></i> API Data Injection</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="api-injection-form">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">Data Source</label>
+                                        <select class="form-select" id="data-source">
+                                            <option value="angel_one">Angel One API</option>
+                                            <option value="yfinance">Yahoo Finance</option>
+                                            <option value="alpha_vantage">Alpha Vantage</option>
+                                            <option value="custom">Custom API</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">Update Frequency (seconds)</label>
+                                        <input type="number" class="form-control" id="update-frequency" 
+                                               value="30" min="5" max="300">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">API Endpoint</label>
+                                        <input type="text" class="form-control" id="api-endpoint" 
+                                               placeholder="https://api.example.com/data">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">API Key</label>
+                                        <input type="password" class="form-control" id="api-key" 
+                                               placeholder="Enter API key">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Symbols to Monitor</label>
+                                        <textarea class="form-control" id="symbols" rows="2" 
+                                                  placeholder="NIFTY50,BANKNIFTY,RELIANCE,TCS (comma-separated)"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-admin">
+                                    <i class="fas fa-play"></i> Start Data Injection
+                                </button>
+                                <button type="button" class="btn btn-danger-admin" onclick="stopDataInjection()">
+                                    <i class="fas fa-stop"></i> Stop
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trading & System Control Section -->
+        <div class="row mb-4">
+            <!-- Trading Parameters -->
+            <div class="col-lg-6">
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-sliders-h"></i> Trading Parameters</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="trading-params-form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Max Concurrent Trades</label>
+                                        <input type="number" class="form-control" id="max-trades" 
+                                               value="5" min="1" max="20">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Risk Per Trade (%)</label>
+                                        <input type="number" class="form-control" id="risk-per-trade" 
+                                               value="2" min="0.1" max="10" step="0.1">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Stop Loss (%)</label>
+                                        <input type="number" class="form-control" id="stop-loss" 
+                                               value="3" min="0.5" max="20" step="0.5">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Take Profit (%)</label>
+                                        <input type="number" class="form-control" id="take-profit" 
+                                               value="6" min="1" max="50" step="0.5">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Trading Strategy</label>
+                                <select class="form-select" id="trading-strategy">
+                                    <option value="momentum">Momentum Trading</option>
+                                    <option value="mean_reversion">Mean Reversion</option>
+                                    <option value="breakout">Breakout Trading</option>
+                                    <option value="scalping">Scalping</option>
+                                    <option value="custom">Custom Strategy</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-admin">
+                                <i class="fas fa-save"></i> Update Parameters
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Control -->
+            <div class="col-lg-6">
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-gamepad"></i> System Control</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="d-grid">
+                                    <button class="btn btn-success-admin" onclick="startAutoTrading()">
+                                        <i class="fas fa-play"></i> Start Auto-Trading
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-grid">
+                                    <button class="btn btn-danger-admin" onclick="stopAutoTrading()">
+                                        <i class="fas fa-stop"></i> Stop Auto-Trading
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="d-grid">
+                                    <button class="btn btn-admin" onclick="clearAllTrades()">
+                                        <i class="fas fa-trash"></i> Clear All Trades
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-grid">
+                                    <button class="btn btn-admin" onclick="resetPortfolio()">
+                                        <i class="fas fa-undo"></i> Reset Portfolio
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-grid">
+                                    <button class="btn btn-admin" onclick="exportData()">
+                                        <i class="fas fa-download"></i> Export Data
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-grid">
+                                    <button class="btn btn-admin" onclick="importData()">
+                                        <i class="fas fa-upload"></i> Import Data
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-3">
+                        
+                        <div class="mb-3">
+                            <h6><i class="fas fa-toggle-on"></i> Trading Mode Control</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="d-grid">
+                                        <button class="btn btn-success-admin" onclick="switchToLiveMode()">
+                                            <i class="fas fa-play"></i> Switch to LIVE Mode
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-grid">
+                                        <button class="btn btn-warning" onclick="switchToDemoMode()">
+                                            <i class="fas fa-flask"></i> Switch to DEMO Mode
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <strong>Current Mode:</strong> <span id="current-trading-mode">Loading...</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Monitoring & Security Section -->
+        <div class="row mb-4">
+            <!-- Real-time Monitoring -->
+            <div class="col-lg-6">
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line"></i> Real-time Monitoring</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Auto-Trading Status:</strong>
+                            <span class="status-indicator" id="trading-status-indicator"></span>
+                            <span id="trading-status-text">Stopped</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Data Feed Status:</strong>
+                            <span class="status-indicator" id="data-status-indicator"></span>
+                            <span id="data-status-text">Inactive</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Last Update:</strong>
+                            <span id="last-update">Never</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Data Quality:</strong>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" id="data-quality-bar" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted" id="data-quality-text">0% - No data</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>System Health:</strong>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" id="system-health-bar" style="width: 100%"></div>
+                            </div>
+                            <small class="text-muted" id="system-health-text">100% - Healthy</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Security Monitoring -->
+            <div class="col-lg-6">
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-shield-alt"></i> Security Monitoring</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Active Sessions:</strong>
+                            <span id="active-sessions">0</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Failed Logins (24h):</strong>
+                            <span id="failed-logins">0</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Security Events (24h):</strong>
+                            <span id="security-events">0</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Rate Violations (1h):</strong>
+                            <span id="rate-violations">0</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button class="btn btn-admin btn-sm" onclick="loadSecurityEvents()">
+                                <i class="fas fa-list"></i> View Security Events
+                            </button>
+                            <button class="btn btn-danger-admin btn-sm" onclick="cleanupSessions()">
+                                <i class="fas fa-trash"></i> Cleanup Sessions
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications & Backup Section -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-bell"></i> Notification System</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Total Notifications:</strong>
+                            <span id="total-notifications">0</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Pending Notifications:</strong>
+                            <span id="pending-notifications">0</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Unread Notifications:</strong>
+                            <span id="unread-notifications">0</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button class="btn btn-admin btn-sm" onclick="loadNotificationStats()">
+                                <i class="fas fa-sync"></i> Refresh Stats
+                            </button>
+                            <button class="btn btn-success-admin btn-sm" onclick="sendTestNotification()">
+                                <i class="fas fa-paper-plane"></i> Send Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-database"></i> Backup System</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>Total Backups:</strong>
+                            <span id="total-backups">0</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Successful Backups:</strong>
+                            <span id="successful-backups">0</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>Total Size:</strong>
+                            <span id="backup-total-size">0 MB</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button class="btn btn-admin btn-sm" onclick="loadBackupStats()">
+                                <i class="fas fa-sync"></i> Refresh Stats
+                            </button>
+                            <button class="btn btn-success-admin btn-sm" onclick="createBackup('full')">
+                                <i class="fas fa-save"></i> Full Backup
+                            </button>
+                            <button class="btn btn-warning btn-sm" onclick="createBackup('database')">
+                                <i class="fas fa-database"></i> DB Backup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Logs -->
+        <div class="row">
+            <div class="col-12">
+                <div class="admin-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-list-alt"></i> System Logs</h5>
+                        <button class="btn btn-sm btn-admin float-end" onclick="clearLogs()">
+                            <i class="fas fa-trash"></i> Clear Logs
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="log-container" id="system-logs">
+                            <div class="log-entry log-info">
+                                <span class="text-muted" id="admin-panel-loaded-time">[--:--:--]</span> Admin panel loaded successfully
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize admin panel
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set the admin panel loaded timestamp
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour12: false, 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            document.getElementById('admin-panel-loaded-time').textContent = `[${timeString}]`;
+            
+            loadSystemStatus();
+            loadTradingParams();
+            updateTradingModeDisplay();
+            startMonitoring();
+            
+            // Form submissions
+            document.getElementById('api-injection-form').addEventListener('submit', handleApiInjection);
+            document.getElementById('trading-params-form').addEventListener('submit', handleTradingParams);
+        });
+
+        // Load system status
+        function loadSystemStatus() {
+            // Load trading mode first using the same endpoint as base template
+            fetch('/api/current_mode')
+            .then(response => response.json())
+            .then(modeData => {
+                // Then load system status
+                fetch('/api/admin/system-status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('active-trades').textContent = data.active_trades || 0;
+                    document.getElementById('total-pnl').textContent = `₹${data.total_pnl || '0.00'}`;
+                    document.getElementById('win-rate').textContent = `${data.win_rate || 0}%`;
+                    
+                    // Use the mode from the consistent endpoint
+                    const tradingMode = modeData.mode === 'live' ? 'LIVE' : 'DEMO';
+                    document.getElementById('api-status').textContent = tradingMode;
+                    
+                    // Update status indicators with consistent mode
+                    const updatedData = { ...data, trading_mode: tradingMode };
+                    updateStatusIndicators(updatedData);
+                })
+                .catch(error => {
+                    addLog('Error loading system status: ' + error.message, 'error');
+                });
+            })
+            .catch(error => {
+                addLog('Error loading trading mode: ' + error.message, 'error');
+                // Fallback to system-status endpoint
+                fetch('/api/admin/system-status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('active-trades').textContent = data.active_trades || 0;
+                    document.getElementById('total-pnl').textContent = `₹${data.total_pnl || '0.00'}`;
+                    document.getElementById('win-rate').textContent = `${data.win_rate || 0}%`;
+                    document.getElementById('api-status').textContent = data.trading_mode || 'DEMO';
+                    updateStatusIndicators(data);
+                })
+                .catch(error => {
+                    addLog('Error loading system status: ' + error.message, 'error');
+                });
+            });
+        }
+
+        // Load trading parameters
+        function loadTradingParams() {
+            fetch('/api/admin/trading-params')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('max-trades').value = data.max_concurrent_trades || 5;
+                document.getElementById('risk-per-trade').value = data.risk_per_trade || 2;
+                document.getElementById('stop-loss').value = data.stop_loss || 3;
+                document.getElementById('take-profit').value = data.take_profit || 6;
+                document.getElementById('trading-strategy').value = data.strategy || 'momentum';
+            })
+            .catch(error => {
+                addLog('Error loading trading parameters: ' + error.message, 'error');
+            });
+        }
+
+        // Handle API injection form
+        function handleApiInjection(e) {
+            e.preventDefault();
+            
+            const formData = {
+                data_source: document.getElementById('data-source').value,
+                api_endpoint: document.getElementById('api-endpoint').value,
+                api_key: document.getElementById('api-key').value,
+                update_frequency: parseInt(document.getElementById('update-frequency').value),
+                symbols: document.getElementById('symbols').value.split(',').map(s => s.trim())
+            };
+            
+            fetch('/api/admin/start-data-injection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    addLog('Data injection started successfully', 'success');
+                    updateDataStatus('Active');
+                } else {
+                    addLog('Failed to start data injection: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                addLog('Error starting data injection: ' + error.message, 'error');
+            });
+        }
+
+        // Handle trading parameters form
+        function handleTradingParams(e) {
+            e.preventDefault();
+            
+            const formData = {
+                max_concurrent_trades: parseInt(document.getElementById('max-trades').value),
+                risk_per_trade: parseFloat(document.getElementById('risk-per-trade').value),
+                stop_loss: parseFloat(document.getElementById('stop-loss').value),
+                take_profit: parseFloat(document.getElementById('take-profit').value),
+                strategy: document.getElementById('trading-strategy').value
+            };
+            
+            fetch('/api/admin/update-trading-params', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    addLog('Trading parameters updated successfully', 'success');
+                } else {
+                    addLog('Failed to update parameters: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                addLog('Error updating parameters: ' + error.message, 'error');
+            });
+        }
+
+        // System control functions
+        function startAutoTrading() {
+            fetch('/api/admin/start-auto-trading', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    addLog('Auto-trading started successfully', 'success');
+                    updateTradingStatus('Running');
+                } else {
+                    addLog('Failed to start auto-trading: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                addLog('Error starting auto-trading: ' + error.message, 'error');
+            });
+        }
+
+        function stopAutoTrading() {
+            fetch('/api/admin/stop-auto-trading', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    addLog('Auto-trading stopped successfully', 'success');
+                    updateTradingStatus('Stopped');
+                } else {
+                    addLog('Failed to stop auto-trading: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                addLog('Error stopping auto-trading: ' + error.message, 'error');
+            });
+        }
+
+        function stopDataInjection() {
+            fetch('/api/admin/stop-data-injection', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    addLog('Data injection stopped successfully', 'success');
+                    updateDataStatus('Inactive');
+                } else {
+                    addLog('Failed to stop data injection: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                addLog('Error stopping data injection: ' + error.message, 'error');
+            });
+        }
+
+        function clearAllTrades() {
+            if (confirm('Are you sure you want to clear all trades? This action cannot be undone.')) {
+                fetch('/api/admin/clear-trades', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        addLog('All trades cleared successfully', 'success');
+                        loadSystemStatus();
+                    } else {
+                        addLog('Failed to clear trades: ' + data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    addLog('Error clearing trades: ' + error.message, 'error');
+                });
+            }
+        }
+
+        function resetPortfolio() {
+            if (confirm('Are you sure you want to reset the portfolio? This will reset all balances and positions.')) {
+                fetch('/api/admin/reset-portfolio', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        addLog('Portfolio reset successfully', 'success');
+                        loadSystemStatus();
+                    } else {
+                        addLog('Failed to reset portfolio: ' + data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    addLog('Error resetting portfolio: ' + error.message, 'error');
+                });
+            }
+        }
+
+        function exportData() {
+            fetch('/api/admin/export-data')
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'trading_data_export.json';
+                a.click();
+                window.URL.revokeObjectURL(url);
+                addLog('Data exported successfully', 'success');
+            })
+            .catch(error => {
+                addLog('Error exporting data: ' + error.message, 'error');
+            });
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            fetch('/api/admin/import-data', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(data)
+                            })
+                            .then(response => response.json())
+                            .then(result => {
+                                if (result.status === 'success') {
+                                    addLog('Data imported successfully', 'success');
+                                    loadSystemStatus();
+                                } else {
+                                    addLog('Failed to import data: ' + result.error, 'error');
+                                }
+                            })
+                            .catch(error => {
+                                addLog('Error importing data: ' + error.message, 'error');
+                            });
+                        } catch (error) {
+                            addLog('Invalid JSON file: ' + error.message, 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        function clearLogs() {
+            document.getElementById('system-logs').innerHTML = '';
+            addLog('Logs cleared', 'info');
+        }
+
+        // Utility functions
+        function addLog(message, type = 'info') {
+            const logsContainer = document.getElementById('system-logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.innerHTML = `<span class="text-muted">[${timestamp}]</span> ${message}`;
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        function updateStatusIndicators(data) {
+            // Update trading status
+            const tradingIndicator = document.getElementById('trading-status-indicator');
+            const tradingText = document.getElementById('trading-status-text');
+            
+            if (data.auto_trading_active) {
+                tradingIndicator.className = 'status-indicator status-online';
+                tradingText.textContent = 'Running';
+            } else {
+                tradingIndicator.className = 'status-indicator status-offline';
+                tradingText.textContent = 'Stopped';
+            }
+            
+            // Update data status
+            const dataIndicator = document.getElementById('data-status-indicator');
+            const dataText = document.getElementById('data-status-text');
+            
+            if (data.data_feed_active) {
+                dataIndicator.className = 'status-indicator status-online';
+                dataText.textContent = 'Active';
+            } else {
+                dataIndicator.className = 'status-indicator status-offline';
+                dataText.textContent = 'Inactive';
+            }
+            
+            // Update system status badge
+            const systemStatus = document.getElementById('system-status');
+            if (data.trading_mode === 'LIVE') {
+                systemStatus.className = 'api-status api-active';
+                systemStatus.textContent = 'LIVE MODE';
+            } else {
+                systemStatus.className = 'api-status api-inactive';
+                systemStatus.textContent = 'DEMO MODE';
+            }
+        }
+
+        function updateTradingStatus(status) {
+            const indicator = document.getElementById('trading-status-indicator');
+            const text = document.getElementById('trading-status-text');
+            
+            if (status === 'Running') {
+                indicator.className = 'status-indicator status-online';
+                text.textContent = 'Running';
+            } else {
+                indicator.className = 'status-indicator status-offline';
+                text.textContent = 'Stopped';
+            }
+        }
+
+        function updateDataStatus(status) {
+            const indicator = document.getElementById('data-status-indicator');
+            const text = document.getElementById('data-status-text');
+            
+            if (status === 'Active') {
+                indicator.className = 'status-indicator status-online';
+                text.textContent = 'Active';
+            } else {
+                indicator.className = 'status-indicator status-offline';
+                text.textContent = 'Inactive';
+            }
+        }
+
+        // Security functions
+        function loadSecurityStats() {
+            fetch('/api/admin/security-stats')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        const stats = result.security_stats;
+                        document.getElementById('active-sessions').textContent = stats.active_sessions || 0;
+                        document.getElementById('failed-logins').textContent = stats.failed_logins_24h || 0;
+                        document.getElementById('security-events').textContent = stats.security_events_24h || 0;
+                        document.getElementById('rate-violations').textContent = stats.rate_violations_1h || 0;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading security stats:', error);
+                });
+        }
+
+        function loadSecurityEvents() {
+            fetch('/api/admin/security-events?limit=50')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        const events = result.security_events;
+                        let eventsHtml = '<div class="security-events-list">';
+                        
+                        if (events.length === 0) {
+                            eventsHtml += '<p class="text-muted">No security events found.</p>';
+                        } else {
+                            events.forEach(event => {
+                                const severityClass = event.severity.toLowerCase();
+                                eventsHtml += `
+                                    <div class="security-event-item mb-2 p-2 border rounded">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="badge bg-${severityClass === 'error' ? 'danger' : severityClass === 'warning' ? 'warning' : 'info'}">${event.severity}</span>
+                                            <small class="text-muted">${event.timestamp}</small>
+                                        </div>
+                                        <div class="mt-1">
+                                            <strong>${event.event_type}</strong>
+                                            <p class="mb-0 small">${event.details}</p>
+                                            <small class="text-muted">IP: ${event.ip_address || 'N/A'} | User: ${event.user_id || 'N/A'}</small>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                        }
+                        
+                        eventsHtml += '</div>';
+                        
+                        // Show in modal or alert
+                        const modal = document.createElement('div');
+                        modal.className = 'modal fade';
+                        modal.innerHTML = `
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content bg-dark text-white">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Security Events</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        ${eventsHtml}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        
+                        document.body.appendChild(modal);
+                        const bsModal = new bootstrap.Modal(modal);
+                        bsModal.show();
+                        
+                        modal.addEventListener('hidden.bs.modal', () => {
+                            document.body.removeChild(modal);
+                        });
+                    }
+                })
+                .catch(error => {
+                    addLog('Error loading security events: ' + error.message, 'error');
+                });
+        }
+
+        function cleanupSessions() {
+            if (confirm('Are you sure you want to cleanup expired sessions?')) {
+                fetch('/api/admin/cleanup-sessions', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.status === 'success') {
+                            addLog(result.message, 'success');
+                            loadSecurityStats();
+                        } else {
+                            addLog('Failed to cleanup sessions: ' + result.error, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        addLog('Error cleaning up sessions: ' + error.message, 'error');
+                    });
+            }
+        }
+
+        // Notification functions
+        function loadNotificationStats() {
+            fetch('/api/admin/notification-stats')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        const stats = result.notification_stats;
+                        document.getElementById('total-notifications').textContent = stats.total_notifications || 0;
+                        document.getElementById('pending-notifications').textContent = stats.pending_notifications || 0;
+                        document.getElementById('unread-notifications').textContent = stats.unread_notifications || 0;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading notification stats:', error);
+                });
+        }
+
+        function sendTestNotification() {
+            const message = prompt('Enter test notification message:', 'This is a test notification from admin panel');
+            if (message) {
+                fetch('/api/admin/send-test-notification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: 1,
+                        type: 'system_alert',
+                        message: message
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        addLog('Test notification sent successfully', 'success');
+                        loadNotificationStats();
+                    } else {
+                        addLog('Failed to send test notification: ' + result.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    addLog('Error sending test notification: ' + error.message, 'error');
+                });
+            }
+        }
+
+        // Backup functions
+        function loadBackupStats() {
+            fetch('/api/admin/backup-stats')
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        const stats = result.backup_stats;
+                        document.getElementById('total-backups').textContent = stats.total_backups || 0;
+                        document.getElementById('successful-backups').textContent = stats.successful_backups || 0;
+                        
+                        // Format size
+                        const sizeInMB = Math.round((stats.total_size || 0) / (1024 * 1024));
+                        document.getElementById('backup-total-size').textContent = sizeInMB + ' MB';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading backup stats:', error);
+                });
+        }
+
+        function createBackup(type) {
+            if (confirm(`Are you sure you want to create a ${type} backup?`)) {
+                fetch('/api/admin/create-backup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: type })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.status === 'success') {
+                        addLog(`${type} backup created successfully: ${result.backup_path}`, 'success');
+                        loadBackupStats();
+                    } else {
+                        addLog(`Failed to create ${type} backup: ` + result.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    addLog(`Error creating ${type} backup: ` + error.message, 'error');
+                });
+            }
+        }
+
+        // Data fetching functions
+        let fetchedData = null;
+        
+        function fetchQuickData(dataType) {
+            document.getElementById('data-type-selector').value = dataType;
+            updateDataForm();
+            fetchSelectedData();
+        }
+        
+        function testFetchData() {
+            addLog('🧪 Testing fetch data functionality...', 'info');
+            
+            // Test with system_logs (should always work)
+            document.getElementById('data-type-selector').value = 'system_logs';
+            updateDataForm();
+            
+            // Set some test values
+            document.getElementById('start-date').value = '2025-01-01';
+            document.getElementById('end-date').value = '2025-01-31';
+            document.getElementById('result-limit').value = '10';
+            
+            addLog('📋 Test parameters set, fetching system_logs...', 'info');
+            fetchSelectedData();
+        }
+        
+        function debugFetchData() {
+            addLog('🐛 Debug: Checking fetch data state...', 'info');
+            addLog(`🐛 Debug: fetchedData = ${JSON.stringify(fetchedData)}`, 'info');
+            addLog(`🐛 Debug: data-type-selector value = ${document.getElementById('data-type-selector').value}`, 'info');
+            
+            const previewContainer = document.getElementById('data-preview-container');
+            const dataPreview = document.getElementById('data-preview');
+            addLog(`🐛 Debug: previewContainer exists = ${!!previewContainer}`, 'info');
+            addLog(`🐛 Debug: dataPreview exists = ${!!dataPreview}`, 'info');
+            
+            if (fetchedData) {
+                addLog('🐛 Debug: Calling previewData() manually...', 'info');
+                previewData();
+            } else {
+                addLog('🐛 Debug: No fetchedData available, testing with user_data...', 'info');
+                document.getElementById('data-type-selector').value = 'user_data';
+                updateDataForm();
+                fetchSelectedData();
+            }
+        }
+        
+        function switchToLiveMode() {
+            addLog('🔄 Switching to LIVE trading mode...', 'info');
+            
+            fetch('/api/switch_to_live', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    addLog(`✅ ${data.message}`, 'success');
+                    updateTradingModeDisplay();
+                    loadSystemStatus(); // Refresh system status
+                } else {
+                    addLog(`❌ Failed to switch to live mode: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                addLog(`❌ Error switching to live mode: ${error.message}`, 'error');
+            });
+        }
+        
+        function switchToDemoMode() {
+            addLog('🔄 Switching to DEMO trading mode...', 'info');
+            
+            fetch('/api/switch_to_demo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    addLog(`✅ ${data.message}`, 'success');
+                    updateTradingModeDisplay();
+                    loadSystemStatus(); // Refresh system status
+                } else {
+                    addLog(`❌ Failed to switch to demo mode: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                addLog(`❌ Error switching to demo mode: ${error.message}`, 'error');
+            });
+        }
+        
+        function updateTradingModeDisplay() {
+            fetch('/api/current_mode')
+            .then(response => response.json())
+            .then(data => {
+                const modeElement = document.getElementById('current-trading-mode');
+                if (modeElement) {
+                    modeElement.textContent = data.mode.toUpperCase();
+                    modeElement.className = data.mode === 'live' ? 'text-success' : 'text-warning';
+                }
+            })
+            .catch(error => {
+                console.error('Error updating trading mode display:', error);
+            });
+        }
+        
+        function updateDataForm() {
+            const dataType = document.getElementById('data-type-selector').value;
+            const form = document.getElementById('data-fetch-form');
+            const fetchBtn = document.getElementById('fetch-btn');
+            const exportBtn = document.getElementById('export-btn');
+            const previewBtn = document.getElementById('preview-btn');
+            
+            
+            if (dataType) {
+                if (form) form.style.display = 'block';
+                if (fetchBtn) fetchBtn.disabled = false;
+                if (exportBtn) exportBtn.disabled = true;
+                if (previewBtn) previewBtn.disabled = false;
+                
+                // Set default date range
+                const today = new Date();
+                const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                const endDateInput = document.getElementById('end-date');
+                const startDateInput = document.getElementById('start-date');
+                if (endDateInput) endDateInput.value = today.toISOString().split('T')[0];
+                if (startDateInput) startDateInput.value = lastWeek.toISOString().split('T')[0];
+                
+                addLog(`📋 Form updated for data type: ${dataType}`, 'info');
+            } else {
+                if (form) form.style.display = 'none';
+                if (fetchBtn) fetchBtn.disabled = true;
+                if (exportBtn) exportBtn.disabled = true;
+                if (previewBtn) previewBtn.disabled = true;
+            }
+        }
+        
+        function fetchSelectedData() {
+            const dataType = document.getElementById('data-type-selector').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const limit = document.getElementById('result-limit').value;
+            const additionalFilters = document.getElementById('additional-filters').value;
+            
+            if (!dataType) {
+                addLog('Please select a data type', 'warning');
+                return;
+            }
+            
+            addLog(`🔄 Fetching ${dataType} data...`, 'info');
+            
+            // Parse additional filters safely
+            let parsedFilters = {};
+            if (additionalFilters && additionalFilters.trim()) {
+                try {
+                    parsedFilters = JSON.parse(additionalFilters);
+                } catch (e) {
+                    addLog('Invalid JSON in additional filters, using empty filters', 'warning');
+                }
+            }
+            
+            const requestData = {
+                data_type: dataType,
+                start_date: startDate,
+                end_date: endDate,
+                limit: parseInt(limit) || 0,
+                additional_filters: parsedFilters
+            };
+            
+            console.log('Fetching data with request:', requestData);
+            
+            fetch('/api/admin/fetch-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    fetchedData = data.data;
+                    document.getElementById('export-btn').disabled = false;
+                    addLog(`✅ Successfully fetched ${data.record_count || 0} records of ${dataType}`, 'success');
+                    
+                    // Auto-preview the data
+                    previewData();
+                } else {
+                    addLog(`❌ Failed to fetch ${dataType}: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                addLog(`❌ Error fetching ${dataType}: ${error.message}`, 'error');
+                console.error('Fetch error:', error);
+            });
+        }
+        
+        function previewData() {
+            if (!fetchedData) {
+                addLog('No data to preview. Please fetch data first.', 'warning');
+                return;
+            }
+            
+            const previewContainer = document.getElementById('data-preview-container');
+            const dataPreview = document.getElementById('data-preview');
+            
+            if (!previewContainer || !dataPreview) {
+                addLog('Preview elements not found', 'error');
+                return;
+            }
+            
+            // Show preview section
+            dataPreview.style.display = 'block';
+            
+            // Format data for preview
+            let previewHtml = '';
+            const dataType = document.getElementById('data-type-selector').value;
+            
+            if (Array.isArray(fetchedData)) {
+                previewHtml += `<div class="log-entry log-info">📊 Found ${fetchedData.length} records of ${dataType}</div>`;
+                
+                if (fetchedData.length === 0) {
+                    previewHtml += `<div class="log-entry log-warning">⚠️ No data found for the selected criteria</div>`;
+                } else {
+                    // Show first 3 records as preview
+                    const previewRecords = fetchedData.slice(0, 3);
+                    previewRecords.forEach((record, index) => {
+                        const recordStr = JSON.stringify(record, null, 2);
+                        previewHtml += `<div class="log-entry log-success">📄 Record ${index + 1}:<br><pre style="font-size: 11px; margin: 5px 0;">${recordStr.substring(0, 300)}${recordStr.length > 300 ? '...' : ''}</pre></div>`;
+                    });
+                    
+                    if (fetchedData.length > 3) {
+                        previewHtml += `<div class="log-entry log-warning">📋 ... and ${fetchedData.length - 3} more records</div>`;
+                    }
+                }
+            } else {
+                const dataStr = JSON.stringify(fetchedData, null, 2);
+                previewHtml += `<div class="log-entry log-info">📊 Data Preview:<br><pre style="font-size: 11px; margin: 5px 0;">${dataStr.substring(0, 500)}${dataStr.length > 500 ? '...' : ''}</pre></div>`;
+            }
+            
+            previewContainer.innerHTML = previewHtml;
+            addLog(`📋 Data preview updated with ${Array.isArray(fetchedData) ? fetchedData.length : 1} records`, 'info');
+        }
+        
+        function exportFetchedData() {
+            if (!fetchedData) {
+                addLog('No data to export. Please fetch data first.', 'warning');
+                return;
+            }
+            
+            const dataType = document.getElementById('data-type-selector').value;
+            const format = document.getElementById('export-format').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            addLog(`Exporting ${dataType} data as ${format.toUpperCase()}...`, 'info');
+            
+            const exportData = {
+                data_type: dataType,
+                data: fetchedData,
+                format: format,
+                start_date: startDate,
+                end_date: endDate,
+                timestamp: new Date().toISOString()
+            };
+            
+            fetch('/api/admin/export-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(exportData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error('Export failed');
+                }
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                // Set filename based on data type and format
+                const filename = `${dataType}_${startDate}_to_${endDate}.${format === 'excel' ? 'xlsx' : format}`;
+                a.download = filename;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                addLog(`Data exported successfully as ${filename}`, 'success');
+            })
+            .catch(error => {
+                addLog(`Error exporting data: ${error.message}`, 'error');
+            });
+        }
+        
+        // Start monitoring
+        function startMonitoring() {
+            setInterval(() => {
+                loadSystemStatus();
+                loadSecurityStats();
+                loadNotificationStats();
+                loadBackupStats();
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+            }, 5000); // Update every 5 seconds
+        }
+    </script>
+{% endblock %}

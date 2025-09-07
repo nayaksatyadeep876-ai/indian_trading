@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Angel One API Configuration{% endblock %}
+
+{% block content %}
+<div class="main">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🔗 Angel One API Configuration</h3>
+                        <p>Configure your Angel One SmartAPI credentials to enable real-time trading</p>
+                    </div>
+                    <div class="card-body">
+                        <div id="status-alert" class="alert" style="display: none;"></div>
+                        
+                        <form id="angel-one-form">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="api_key">API Key</label>
+                                        <input type="text" class="form-control" id="api_key" name="api_key" 
+                                               placeholder="Enter your Angel One API Key" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="client_id">Client ID</label>
+                                        <input type="text" class="form-control" id="client_id" name="client_id" 
+                                               placeholder="Enter your Angel One Client ID" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="password">Password</label>
+                                        <input type="password" class="form-control" id="password" name="password" 
+                                               placeholder="Enter your Angel One Password" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="totp_secret">TOTP Secret</label>
+                                        <input type="text" class="form-control" id="totp_secret" name="totp_secret" 
+                                               placeholder="Enter your TOTP Secret" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-cog"></i> Configure Angel One API
+                                </button>
+                                <button type="button" class="btn btn-info" onclick="checkStatus()">
+                                    <i class="fas fa-info-circle"></i> Check Status
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5>📊 Account Info</h5>
+                                        <button class="btn btn-outline-primary" onclick="getFunds()">
+                                            Get Funds
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5>💼 Holdings</h5>
+                                        <button class="btn btn-outline-success" onclick="getHoldings()">
+                                            Get Holdings
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h5>📈 Positions</h5>
+                                        <button class="btn btn-outline-warning" onclick="getPositions()">
+                                            Get Positions
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="api-results" class="mt-4" style="display: none;">
+                            <h5>API Response:</h5>
+                            <pre id="api-response" class="bg-dark text-light p-3 rounded"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check initial status
+    checkStatus();
+    
+    // Handle form submission
+    document.getElementById('angel-one-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        configureAngelOne();
+    });
+});
+
+function configureAngelOne() {
+    const formData = {
+        api_key: document.getElementById('api_key').value,
+        client_id: document.getElementById('client_id').value,
+        password: document.getElementById('password').value,
+        totp_secret: document.getElementById('totp_secret').value
+    };
+    
+    showAlert('Configuring Angel One API...', 'info');
+    
+    fetch('/api/angel_one/configure', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showAlert('Angel One API configured successfully!', 'success');
+            checkStatus();
+        } else {
+            showAlert('Failed to configure Angel One API: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('Error configuring Angel One API: ' + error.message, 'danger');
+    });
+}
+
+function checkStatus() {
+    fetch('/api/angel_one/status')
+    .then(response => response.json())
+    .then(data => {
+        let alertClass = 'info';
+        let message = data.message;
+        
+        if (data.status === 'connected') {
+            alertClass = 'success';
+        } else if (data.status === 'disconnected') {
+            alertClass = 'warning';
+        } else if (data.status === 'not_configured') {
+            alertClass = 'info';
+        }
+        
+        showAlert(message, alertClass);
+    })
+    .catch(error => {
+        showAlert('Error checking status: ' + error.message, 'danger');
+    });
+}
+
+function getFunds() {
+    fetch('/api/angel_one/funds')
+    .then(response => response.json())
+    .then(data => {
+        showApiResponse(data);
+    })
+    .catch(error => {
+        showApiResponse({error: error.message});
+    });
+}
+
+function getHoldings() {
+    fetch('/api/angel_one/holdings')
+    .then(response => response.json())
+    .then(data => {
+        showApiResponse(data);
+    })
+    .catch(error => {
+        showApiResponse({error: error.message});
+    });
+}
+
+function getPositions() {
+    fetch('/api/angel_one/positions')
+    .then(response => response.json())
+    .then(data => {
+        showApiResponse(data);
+    })
+    .catch(error => {
+        showApiResponse({error: error.message});
+    });
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.getElementById('status-alert');
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.textContent = message;
+    alertDiv.style.display = 'block';
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        alertDiv.style.display = 'none';
+    }, 5000);
+}
+
+function showApiResponse(data) {
+    const resultsDiv = document.getElementById('api-results');
+    const responseDiv = document.getElementById('api-response');
+    
+    responseDiv.textContent = JSON.stringify(data, null, 2);
+    resultsDiv.style.display = 'block';
+}
+</script>
+{% endblock %}

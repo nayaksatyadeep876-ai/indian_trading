@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main">
+    <div class="topbar">
+        <div class="welcome">Legal Information</div>
+        <div class="demo-timer" id="demo-timer">Demo Time Left: <span id="demo-time">--:--</span></div>
+    </div>
+
+    <div class="legal-container">
+        <div class="legal-section">
+            <h2>Terms of Service</h2>
+            <p>By accessing and using KishanX Trading Signals, you agree to comply with and be bound by the following terms and conditions.</p>
+            
+            <h3>1. Service Description</h3>
+            <p>KishanX Trading Signals provides trading signals and market analysis tools. These are for informational purposes only and should not be considered as financial advice.</p>
+            
+            <h3>2. Risk Disclosure</h3>
+            <p>Trading in financial markets involves substantial risk. Past performance is not indicative of future results. You should carefully consider your investment objectives, level of experience, and risk appetite.</p>
+            
+            <h3>3. Disclaimer</h3>
+            <p>The information provided by KishanX Trading Signals is for general informational purposes only. We make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, suitability, or availability of the information.</p>
+        </div>
+
+        <div class="legal-section">
+            <h2>Privacy Policy</h2>
+            <p>Your privacy is important to us. This section explains how we collect, use, and protect your personal information.</p>
+            
+            <h3>1. Data Collection</h3>
+            <p>We collect information that you provide directly to us, including but not limited to registration details, trading preferences, and usage data.</p>
+            
+            <h3>2. Data Usage</h3>
+            <p>The collected information is used to provide and improve our services, communicate with you, and comply with legal obligations.</p>
+            
+            <h3>3. Data Protection</h3>
+            <p>We implement appropriate security measures to protect your personal information against unauthorized access or disclosure.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+.legal-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.legal-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.legal-section h2 {
+    color: #00e6d0;
+    margin-bottom: 1.5rem;
+}
+
+.legal-section h3 {
+    color: #fff;
+    margin: 1.5rem 0 1rem;
+}
+
+.legal-section p {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .legal-container {
+        padding: 1rem;
+    }
+    
+    .legal-section {
+        padding: 1.5rem;
+    }
+}
+</style>
+
+<script>
+// Demo timer fetch
+function updateDemoTime() {
+    fetch("/get_demo_time")
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("demo-time").textContent = data.time_left;
+        });
+}
+setInterval(updateDemoTime, 1000);
+updateDemoTime();
+</script>
+{% endblock %} 

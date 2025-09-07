@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Auto-Trading Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .nav-buttons {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .nav-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 0 10px;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .status-item {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .status-item h3 {
+            color: #34495e;
+            margin-bottom: 5px;
+        }
+        
+        .status-value {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .connected { color: #27ae60; }
+        .disconnected { color: #e74c3c; }
+        .running { color: #3498db; }
+        .stopped { color: #95a5a6; }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .logs-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #27ae60, #229954);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .data-display {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .signal-item {
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #27ae60;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .signal-buy { border-left-color: #27ae60; }
+        .signal-sell { border-left-color: #e74c3c; }
+        .signal-hold { border-left-color: #f39c12; }
+        
+        .confidence-bar {
+            background: #ecf0f1;
+            border-radius: 10px;
+            height: 20px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #f39c12, #27ae60);
+            transition: width 0.3s ease;
+        }
+        
+        .market-data {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .market-item {
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .market-item h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .market-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .positive { color: #27ae60; }
+        .negative { color: #e74c3c; }
+        
+        .log-container {
+            background: #2c3e50;
+            color: #ecf0f1;
+            border-radius: 8px;
+            padding: 15px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            width: 100%;
+            min-height: 300px;
+        }
+        
+        .logs-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            width: 100%;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        
+        .log-info { background: rgba(52, 152, 219, 0.2); }
+        .log-success { background: rgba(39, 174, 96, 0.2); }
+        .log-warning { background: rgba(241, 196, 15, 0.2); }
+        .log-error { background: rgba(231, 76, 60, 0.2); }
+        
+        .refresh-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #3498db;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .hidden { display: none; }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .logs-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .button-group {
+                justify-content: center;
+            }
+            
+            .log-container {
+                height: 300px;
+                font-size: 12px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .log-container {
+                height: 250px;
+                font-size: 11px;
+                padding: 10px;
+            }
+            
+            .logs-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Enhanced Auto-Trading Dashboard</h1>
+            <p style="text-align: center; color: #7f8c8d; margin-top: 10px;">
+                High-Quality Signals • Comprehensive Market Data • Profitable Trading
+            </p>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="/indian" class="nav-btn">📊 Indian Trading</a>
+            <a href="/dashboard" class="nav-btn">🏠 Main Dashboard</a>
+            <a href="/logout" class="nav-btn">🚪 Logout</a>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-item">
+                <h3>Angel One API</h3>
+                <div class="status-value" id="angel-status">Checking...</div>
+            </div>
+            <div class="status-item">
+                <h3>Auto-Trading</h3>
+                <div class="status-value" id="auto-trade-status">Checking...</div>
+            </div>
+            <div class="status-item">
+                <h3>Active Trades</h3>
+                <div class="status-value" id="active-trades">0</div>
+            </div>
+            <div class="status-item">
+                <h3>Total P&L</h3>
+                <div class="status-value" id="total-pnl">₹0.00</div>
+            </div>
+            <div class="status-item">
+                <h3>Win Rate</h3>
+                <div class="status-value" id="win-rate">0%</div>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- Enhanced Signals Card -->
+            <div class="card">
+                <h2>🎯 Enhanced Trading Signals</h2>
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="fetchEnhancedSignals()">
+                        🔄 Refresh Signals
+                    </button>
+                    <button class="btn btn-success" onclick="startAutoTrading()">
+                        ▶️ Start Auto-Trading
+                    </button>
+                    <button class="btn btn-danger" onclick="stopAutoTrading()">
+                        ⏹️ Stop Auto-Trading
+                    </button>
+                </div>
+                <div id="signals-container">
+                    <div class="data-display">
+                        <p>Click "Refresh Signals" to load high-quality trading signals</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Market Data Card -->
+            <div class="card">
+                <h2>📊 Comprehensive Market Data</h2>
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="fetchMarketData()">
+                        📈 Load Market Data
+                    </button>
+                    <button class="btn btn-warning" onclick="refreshMarketData()">
+                        🔄 Auto-Refresh
+                    </button>
+                </div>
+                <div id="market-data-container">
+                    <div class="data-display">
+                        <p>Click "Load Market Data" to fetch comprehensive OHLC + Volume data</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Performance Metrics Card -->
+            <div class="card">
+                <h2>📈 Performance Metrics</h2>
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="fetchPerformanceMetrics()">
+                        📊 Update Metrics
+                    </button>
+                </div>
+                <div id="performance-container">
+                    <div class="data-display">
+                        <p>Click "Update Metrics" to view detailed performance data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Logs Card - Full Width -->
+        <div class="logs-grid">
+            <div class="logs-card">
+                <h2>📝 System Logs</h2>
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="clearLogs()">
+                        🗑️ Clear Logs
+                    </button>
+                    <button class="btn btn-warning" onclick="toggleAutoScroll()">
+                        📜 Auto-Scroll
+                    </button>
+                </div>
+                <div class="log-container" id="log-container">
+                    <div class="log-entry log-info">
+                        [INFO] Enhanced Auto-Trading Dashboard loaded
+                    </div>
+                    <div class="log-entry log-info">
+                        [INFO] Ready to fetch enhanced signals and market data
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = '/test';
+        let autoRefreshInterval;
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('Dashboard initialized successfully', 'success');
+            checkSystemStatus();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(checkSystemStatus, 30000);
+        });
+        
+        // Check system status
+        async function checkSystemStatus() {
+            try {
+                // Use the test endpoint that doesn't require authentication
+                const response = await fetch('/test_system_status');
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatusBar(data);
+                    addLog('System status updated', 'info');
+                } else {
+                    addLog('Failed to fetch system status', 'warning');
+                }
+            } catch (error) {
+                addLog(`System status check failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Update status bar
+        function updateStatusBar(data) {
+            document.getElementById('angel-status').textContent = data.angel_one_connected ? 'Connected' : 'Disconnected';
+            document.getElementById('angel-status').className = data.angel_one_connected ? 'status-value connected' : 'status-value disconnected';
+            
+            document.getElementById('auto-trade-status').textContent = data.enhanced_trading_active ? 'Running' : 'Stopped';
+            document.getElementById('auto-trade-status').className = data.enhanced_trading_active ? 'status-value running' : 'status-value stopped';
+            
+            document.getElementById('active-trades').textContent = data.active_trades || 0;
+            document.getElementById('total-pnl').textContent = `₹${(data.total_pnl || 0).toFixed(2)}`;
+            document.getElementById('win-rate').textContent = `${(data.win_rate || 0).toFixed(1)}%`;
+        }
+        
+        // Fetch enhanced signals
+        async function fetchEnhancedSignals() {
+            addLog('Fetching enhanced trading signals...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/enhanced_signals`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displaySignals(data.signals || []);
+                    addLog(`Loaded ${data.signals?.length || 0} enhanced signals`, 'success');
+                } else {
+                    addLog('Failed to fetch enhanced signals', 'error');
+                }
+            } catch (error) {
+                addLog(`Error fetching signals: ${error.message}`, 'error');
+            }
+        }
+        
+        // Display signals
+        function displaySignals(signals) {
+            const container = document.getElementById('signals-container');
+            if (signals.length === 0) {
+                container.innerHTML = '<div class="data-display"><p>No high-quality signals available at the moment (market may be closed)</p></div>';
+                return;
+            }
+            
+            container.innerHTML = signals.map(signal => `
+                <div class="signal-item signal-${signal.signal_type.toLowerCase()}">
+                    <h4>${signal.symbol} - ${signal.signal_type.toUpperCase()}</h4>
+                    <p><strong>Confidence:</strong> ${(signal.confidence * 100).toFixed(1)}%</p>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: ${signal.confidence * 100}%"></div>
+                    </div>
+                    <p><strong>Price:</strong> ₹${signal.current_price}</p>
+                    <p><strong>Target:</strong> ₹${signal.target_price}</p>
+                    <p><strong>Stop Loss:</strong> ₹${signal.stop_loss}</p>
+                    <p><strong>Risk-Reward:</strong> ${signal.risk_reward_ratio}:1</p>
+                </div>
+            `).join('');
+        }
+        
+        // Fetch market data
+        async function fetchMarketData() {
+            addLog('Fetching comprehensive market data...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/market_data_bulk?symbols=SBIN,BANKNIFTY,INFY,RELIANCE`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayMarketData(data.data?.fetched || []);
+                    addLog(`Loaded market data for ${data.data?.fetched?.length || 0} symbols`, 'success');
+                } else {
+                    addLog('Failed to fetch market data', 'error');
+                }
+            } catch (error) {
+                addLog(`Error fetching market data: ${error.message}`, 'error');
+            }
+        }
+        
+        // Display market data
+        function displayMarketData(marketData) {
+            const container = document.getElementById('market-data-container');
+            if (marketData.length === 0) {
+                container.innerHTML = '<div class="data-display"><p>No market data available (market may be closed)</p></div>';
+                return;
+            }
+            
+            container.innerHTML = marketData.map(item => `
+                <div class="market-item">
+                    <h4>${item.tradingSymbol}</h4>
+                    <div class="market-value">₹${item.ltp}</div>
+                    <p>Change: <span class="${item.percentChange >= 0 ? 'positive' : 'negative'}">
+                        ${item.percentChange >= 0 ? '+' : ''}${item.percentChange.toFixed(2)}%
+                    </span></p>
+                    <p>Volume: ${item.tradeVolume?.toLocaleString() || 'N/A'}</p>
+                    <p>High: ₹${item.high} | Low: ₹${item.low}</p>
+                </div>
+            `).join('');
+        }
+        
+        // Fetch performance metrics
+        async function fetchPerformanceMetrics() {
+            addLog('Fetching performance metrics...', 'info');
+            try {
+                const response = await fetch('/test_system_status', { method: 'POST' });
+                if (response.ok) {
+                    const data = await response.json();
+                    displayPerformanceMetrics(data);
+                    addLog('Performance metrics updated', 'success');
+                } else {
+                    addLog('Failed to fetch performance metrics', 'error');
+                }
+            } catch (error) {
+                addLog(`Error fetching metrics: ${error.message}`, 'error');
+            }
+        }
+        
+        // Display performance metrics
+        function displayPerformanceMetrics(data) {
+            const container = document.getElementById('performance-container');
+            container.innerHTML = `
+                <div class="data-display">
+                    <h4>📊 Trading Performance</h4>
+                    <p><strong>Total Trades:</strong> ${data.total_trades || 0}</p>
+                    <p><strong>Winning Trades:</strong> ${data.winning_trades || 0}</p>
+                    <p><strong>Losing Trades:</strong> ${data.losing_trades || 0}</p>
+                    <p><strong>Win Rate:</strong> ${(data.win_rate || 0).toFixed(1)}%</p>
+                    <p><strong>Total P&L:</strong> ₹${(data.total_pnl || 0).toFixed(2)}</p>
+                    <p><strong>Average Profit:</strong> ₹${(data.average_profit || 0).toFixed(2)}</p>
+                    <p><strong>Max Drawdown:</strong> ₹${(data.max_drawdown || 0).toFixed(2)}</p>
+                </div>
+            `;
+        }
+        
+        // Start auto-trading
+        async function startAutoTrading() {
+            addLog('Starting enhanced auto-trading...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/start_auto_trading`, { method: 'POST' });
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog('Enhanced auto-trading started successfully', 'success');
+                    checkSystemStatus();
+                } else {
+                    addLog('Failed to start auto-trading', 'error');
+                }
+            } catch (error) {
+                addLog(`Error starting auto-trading: ${error.message}`, 'error');
+            }
+        }
+        
+        // Stop auto-trading
+        async function stopAutoTrading() {
+            addLog('Stopping enhanced auto-trading...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/stop_auto_trading`, { method: 'POST' });
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog('Enhanced auto-trading stopped', 'success');
+                    checkSystemStatus();
+                } else {
+                    addLog('Failed to stop auto-trading', 'error');
+                }
+            } catch (error) {
+                addLog(`Error stopping auto-trading: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-refresh market data
+        function refreshMarketData() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                addLog('Auto-refresh stopped', 'info');
+            } else {
+                autoRefreshInterval = setInterval(fetchMarketData, 10000);
+                addLog('Auto-refresh started (10s interval)', 'success');
+            }
+        }
+        
+        // Clear logs
+        function clearLogs() {
+            document.getElementById('log-container').innerHTML = '';
+            addLog('Logs cleared', 'info');
+        }
+        
+        // Toggle auto-scroll
+        let autoScrollEnabled = true;
+        function toggleAutoScroll() {
+            autoScrollEnabled = !autoScrollEnabled;
+            const button = event.target;
+            button.textContent = autoScrollEnabled ? '📜 Auto-Scroll' : '⏸️ Auto-Scroll';
+            button.className = autoScrollEnabled ? 'btn btn-warning' : 'btn btn-danger';
+            addLog(`Auto-scroll ${autoScrollEnabled ? 'enabled' : 'disabled'}`, 'info');
+        }
+        
+        // Enhanced addLog function with auto-scroll
+        function addLog(message, type = 'info') {
+            const container = document.getElementById('log-container');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            container.appendChild(logEntry);
+            
+            if (autoScrollEnabled) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+# Core numerical packages (must be first)
+numpy==1.23.5
+pandas==1.5.3
+scipy==1.10.1
+scikit-learn==1.3.0
+
+# Web Framework
+Flask==2.0.2
+Werkzeug==2.0.2
+Jinja2==3.0.1
+flask-cors==4.0.0  # Downgraded for compatibility
+flask-socketio==5.1.1
+
+# SocketIO dependencies
+python-socketio==5.4.0
+python-engineio==4.3.1
+eventlet==0.33.0
+dnspython==2.2.1
+simple-websocket==1.1.0
+
+# Database
+mysql-connector-python==8.0.32
+python-dotenv==0.19.0
+SQLAlchemy==1.4.41
+
+# Data Processing and Analysis
+pandas_ta==0.3.14b0
+yfinance==0.2.18
+
+# Technical Analysis
+ta-lib==0.4.28
+
+# Visualization
+matplotlib==3.7.1
+seaborn==0.12.2
+
+# API and HTTP
+requests==2.31.0
+httpx==0.24.1
+alpha_vantage==2.3.1
+
+# Angel One SmartAPI
+smartapi-python==1.4.8
+pyotp==2.8.0
+logzero==1.7.0
+websocket-client==1.8.0
+pycryptodome==3.20.0
+
+# Twisted ecosystem (simplified)
+Twisted==22.10.0
+autobahn==23.6.2
+txaio==23.1.1
+hyperlink==21.0.0
+constantly==15.1.0
+incremental==22.10.0
+zope.interface==6.0
+
+# Security and cryptography
+cryptography==41.0.7  # Downgraded for compatibility
+PyJWT==2.10.1
+certifi==2023.11.17
+cffi==1.15.1
+
+# Utilities
+attrs==23.1.0
+Automat==22.10.0
+python-dateutil==2.8.2
+pytz==2023.3
+tqdm==4.66.1
+schedule==1.2.2
+setuptools==65.5.1
+
+# PDF Generation
+reportlab==3.6.12
+
+# Text processing
+charset-normalizer==3.3.2
+idna==3.4
+pycparser==2.21
+pyparsing==3.1.0
+six==1.16.0
+typing_extensions==4.8.0
+urllib3==2.0.7
+
+# RDF (optional - removed if not critical)
+# isodate==0.6.1
+# rdflib==6.3.2
+# rdflib-jsonld==0.6.2
+
+# Testing
+pytest==7.2.0
+pytest-cov==4.0.0
+
+# Development
+gunicorn==21.2.0
+black==22.12.0
+flake8==6.0.0
+
+# Removed problematic packages:
+# simplejson (included in standard library)
+# rdflib dependencies (if not critically needed)
